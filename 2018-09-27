@@ -2,3 +2,8 @@ Es6：
 number   Number.isFinite()   判断是否为有限的数
          Number.isNaN() 判断是否是NaN
          Math.cbrt() 计算立方根
+
+python：
+         中文分词技术：
+                  规则分词：正向最大匹配法、逆向最大匹配法、双向最大匹配法
+                  统计分词
