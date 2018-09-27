@@ -1,0 +1,4 @@
+Es6：
+number   Number.isFinite()   判断是否为有限的数
+         Number.isNaN() 判断是否是NaN
+         Math.cbrt() 计算立方根
