@@ -1,0 +1,605 @@
+<template>
+  <div class="app" ref="app">
+    <div style="width:100px;height:100px;position:fixed;background:red;bottom:0;"></div>
+    <img class="banner" ref="banner" src="../images/banner.png" alt="">
+    <div class="_black_height">
+      <div class="me" :id="bannerFix" ref="bannerFix">
+        <!-- <h3 v-if="userInfo.currentUser == '1'">我</h3> -->
+        <div class="m-item">
+          <div class="m-img">
+            <img onerror="this.onerror=null;this.src='static/static/default.png'"  :src="userInfo.headImg" alt="">
+          </div>
+          <div class="cneter_">
+            {{ userInfo.userName }}
+          </div>
+          <router-link class="switchUser" :to="'/switchUser?openId=' + openId">切换用户</router-link>
+        </div>
+      </div>
+    </div>
+    <div class="me" >
+      <h3 class="myHeadthBod">我的健康数据</h3>
+      <div class="content_orderList">
+        <div v-for="(i, key) in showData" :key="key" class="border_box">
+          <router-link class="m-item my-item" :to="'detail' + i.pageUrl + ''">
+            <div class="my-img">
+              <div class="bgUrl" :style="'background:url(static/static/item'+ i.pic + '.png) no-repeat center / contain'"></div>
+            </div>
+            <div class="my-center">
+              <div class="my-title">
+                <h4>{{i.name}}</h4>
+                <span v-if="i.status !== '0' && (i.labelInput !== null && i.labelInput !== '')">异常</span>
+                <div class="is_black"></div>
+              </div>
+              <div class="process" v-if="i.labelInput !== null && i.labelInput !== ''">
+                <li class="fontSize20 yellowCladd opictitya"  :style="i.status == '-1'?{'opacity': '1', 'position': 'relative'}:''">
+                  <div :style="i.status == '-1'?{'position': 'absolute','left':'50%'}:{'display':'none'}">
+                    <span class="fontSize20 colorB9B9B9">{{ i.label }}</span>
+                    <span class="" style="color:#FFB628;">{{ i.labelInput }}</span>
+                    <span class="fontSize20" style="color:#FFB628;">{{ i.unit }}</span>
+                  </div>
+                </li>
+                <li class="opictitya" :style="i.status == '0'?{'opacity': '1', 'position': 'relative'}:''">
+                  <div :style="i.status == '0'?{'position': 'absolute','left':'50%'}:{'display':'none'}">
+                    <span class="fontSize20 colorB9B9B9">{{ i.label }}</span>
+                    <span class="">{{ i.labelInput }}</span>
+                    <span class="fontSize20">{{ i.unit }}</span>
+                  </div>
+                </li>
+                <li class="opictitya" :style="i.status == '1'?{'opacity': '1', 'position': 'relative'}:''">
+                  <div :style="i.status == '1'?{'position': 'absolute','right':'0','transform': 'translateX(0%)'}:{'display':'none'}">
+                    <span class="fontSize20 colorB9B9B9">{{ i.label }}</span>
+                    <span class="">{{ i.labelInput }}</span>
+                    <span class="fontSize20">{{ i.unit }}</span>
+                  </div>
+                </li>
+              </div>
+              <div class="my-last">
+                <p>{{ i.content }}</p>
+                <p v-if="i.labelInput !== null">{{ i.dataShow }}</p>
+              </div>
+              <div class="showmore" @click.prevent="showmoreColirk" v-if="i.pageUrl == '104' && i.labelInput">
+                <button v-if="!showthreeCircle">更多...</button>
+                <button v-else>收起</button>
+              </div>
+            </div>
+            <div class="threeCircle_1">
+              <div class="threeCircle" v-if="i.pageUrl == '104' && i.labelInput && showthreeCircle">
+                <div>
+                  <div class="circle_" :class="i.tgStatus == 1 ? 'borderUpper': i.tgStatus == 0 ? 'normals' : i.tgStatus == -1 ? '' : i.tgStatus == -2 ? 'borderLow' : ''">
+                    <p>{{ i.tg }}</p>
+                    <p>{{ i.tgStatus == 1 ? "偏高": i.tgStatus == 0 ? "正常" : i.tgStatus == -1 ? "偏低" : i.tgStatus == -2 ? "未知" : '' }}</p>
+                  </div>
+                  <p>&nbsp;甘油三酯&nbsp;</p>
+                </div>
+                <div>
+                  <div class="circle_" :class="i.tgStatus == 1 ? 'borderUpper': i.tgStatus == 0 ? 'normals' : i.tgStatus == -1 ? '' : i.tgStatus == -2 ? 'borderLow' : ''">
+                    <p>{{ i.hdl }}</p>
+                    <p>{{ i.hdlStatus == 1 ? "偏高": i.hdlStatus == 0 ? "正常" : i.hdlStatus == -1 ? "偏低" : i.hdlStatus == -2 ? "未知" : '' }}</p>
+                  </div>
+                  <p>高密度脂蛋白</p>
+                </div>
+                <div>
+                  <div class="circle_" :class="i.tgStatus == 1 ? 'borderUpper': i.tgStatus == 0 ? 'normals' : i.tgStatus == -1 ? '' : i.tgStatus == -2 ? 'borderLow' : ''">
+                    <p>{{ i.ldl }}</p>
+                    <p>{{ i.ldlStatus == 1 ? "偏高": i.ldlStatus == 0 ? "正常" : i.ldlStatus == -1 ? "偏低" : i.ldlStatus == -2 ? "未知" : '' }}</p>
+                  </div>
+                  <p>低密度脂蛋白</p>
+                </div>
+              </div>
+            </div>
+            
+          </router-link>
+        </div>
+      </div>
+    </div>
+    <div class="end">
+      <div><span>没有更多数据啦</span></div>
+    </div>
+  </div>
+</template>
+<script>
+import { Indicator, Toast } from 'mint-ui';
+export default {
+  data () {
+    return {
+      flagData: {
+        101: {name: '血压', pic: '1', pageUrl: '101', label: '', labelInput: '', content: '暂无测量数据', dataShow: ''},
+        104: {name: '血糖', pic: '2', pageUrl: '102', label: '', labelInput: '', content: '暂无测量数据', dataShow: ''},
+        103: {name: '心电', pic: '3', pageUrl: '103', label: '', labelInput: '', content: '暂无测量数据', dataShow: ''},
+        112: {name: '血脂', pic: '12', pageUrl: '104', label: '', labelInput: '', content: '暂无测量数据', dataShow: ''},
+        102: {name: '血氧', pic: '4', pageUrl: '105', label: '', labelInput: '', content: '暂无测量数据', dataShow: ''},
+        105: {name: '体温', pic: '5', pageUrl: '106', label: '', labelInput: '', content: '暂无测量数据', dataShow: ''},
+        113: {name: '睡眠', pic: '7', status: '', pageUrl: '107', label: '', labelInput: '', content: '暂无测量数据', dataShow: '', unit: ''},
+        111: {name: 'BMI', pic: '8', pageUrl: '108', label: '', labelInput: '', content: '暂无测量数据', dataShow: ''},
+        107: {name: '总胆固醇', pic: '9', pageUrl: '109', label: '', labelInput: '', content: '暂无测量数据', dataShow: ''},
+        106: {name: '糖化血红蛋白', pic: '6', pageUrl: '110', label: '', labelInput: '', content: '暂无测量数据', dataShow: ''},
+        110: {name: '尿酸', pic: '11', pageUrl: '111', label: '', labelInput: '', content: '暂无测量数据', dataShow: ''}
+      },
+      showData: {},
+      userInfo: {
+        idCard: {
+          idNo: ''
+        }
+      },
+      openId: '',
+      box: '',
+      bannerFix: '',
+      showthreeCircle: false,
+      watiT: '',
+      nowTopIs: 0
+    };
+  },
+  created () {
+    let that = this;
+    window.addEventListener('scroll', that.handleScroll);
+  },
+  async mounted () {
+    this.box = document.body;
+    this.openId = this.$route.query.openId;
+    this.userInfo.idCard = this.$route.query.idNo || '';
+    if (this.$route.query.idNo) {
+      await this.selectThis(this.$route.query.idNo);
+      this.getUser();
+    } else {
+      this.getUser();
+    }
+  },
+  destroyed () {
+    window.removeEventListener('scroll', this.handleScroll);
+  },
+  methods: {
+    showmoreColirk () {
+      this.showthreeCircle = !this.showthreeCircle;
+    },
+    handleScroll () {
+      var scrollTop = window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop;
+      if (scrollTop > 186) {
+        if (this.bannerFix !== 'bannerFix') {
+          this.bannerFix = 'bannerFix';
+        }
+      } else {
+        this.bannerFix = '';
+      }
+    },
+    async selectThis (idCard) {
+      let that = this;
+      let params = {
+        idCard: idCard,
+        openId: that.openId
+      };
+      Indicator.open();
+      try {
+        let data = await that.$http.relationUserSwitchUser(params);
+        if (data.data == true) {
+          Indicator.close();
+        } else {
+          Toast({
+            message: '加载失败',
+            duration: 1000
+          });
+        }
+      } catch (error) {
+        console.log(error);
+      };
+    },
+    async getUser () {
+      let that = this;
+      let params = {
+        openId: that.openId
+      };
+      try {
+        // alert('准备发送current-user请求,当前openId为' + that.openId + '当前身份证号为' + JSON.stringify(that.userInfo.idCard));
+        let data = await that.$http.relationUserCurrentUser(params);
+        // let msg = '当前获取完成current-user信息,获取内容为:' + JSON.stringify(data);
+        // alert(msg);
+        that.userInfo = data.data;
+        that.$store.commit('setIdNo', data.data.idCard);
+        that.init();
+      } catch (error) {
+        console.log(error);
+      };
+    },
+    async init () {
+      let that = this;
+      let params = that.userInfo.idCard;
+      try {
+        let data = await that.$http.healthDataOverview(params);
+        let tempArr = data.data;
+        tempArr.forEach((element, indexa) => {
+          let key = Object.keys(element)[0];
+          let value = element[key];
+          if (value instanceof Array && value.length > 0) {
+            that.buildData(key, value[0], tempArr, indexa);
+          } else {
+            tempArr[indexa] = that.flagData[key];
+          };
+        });
+        that.showData = tempArr;
+      } catch (error) {
+        console.log(error);
+      };
+    },
+    buildData (nomb, tempData, tempArr, indexa) {
+      let that = this;
+      switch (nomb) {
+        case '101':
+          let td1 = {name: '血压', pic: '1', status: '', pageUrl: '101', label: '', labelInput: '', content: '', dataShow: '', unit: ''};
+          td1.dataShow = tempData.yearMonth;
+          td1.label = '收缩压/舒张压:';
+          td1.labelInput = tempData.ssy + '/' + tempData.szy;
+          td1.unit = 'mmHg';
+          td1.status = tempData.status;
+          td1.content = '血压' + that.defaultContent(tempData.status, tempData.ssy + tempData.szy);
+          Object.assign(tempArr[indexa], td1);
+          break;
+        case '104':
+          let td2 = {name: '血糖', pic: '2', status: '', pageUrl: '102', label: '', labelInput: '', content: '', dataShow: '', unit: ''};
+          td2.dataShow = tempData.yearMonth;
+          if (tempData.result == 1) {
+            td2.label = '空腹:';
+          } else {
+            td2.label = `餐后${tempData.result - 1}小时:`;
+          }
+          td2.labelInput = tempData.xt;
+          td2.status = tempData.status;
+          td2.unit = 'mmol/L';
+          td2.content = '血糖' + that.defaultContent(tempData.status, tempData.xt);
+          Object.assign(tempArr[indexa], td2);
+          break;
+        case '103':
+          let td3 = {name: '心电', pic: '3', status: '', pageUrl: '103', label: '', labelInput: '', content: '', dataShow: '', unit: ''};
+          td3.dataShow = tempData.yearMonth;
+          td3.label = '心律:';
+          td3.labelInput = tempData.xl;
+          td3.status = tempData.status;
+          td3.unit = 'bpm';
+          td3.content = '心电' + that.defaultContent(tempData.status, tempData.xl);
+          Object.assign(tempArr[indexa], td3);
+          break;
+        case '112':
+          console.log(tempData);
+          let td4 = {name: '血脂', pic: '4', status: '', pageUrl: '104', label: '', labelInput: '', content: '', dataShow: '', unit: ''};
+          td4.dataShow = tempData.yearMonth;
+          td4.label = '总胆固醇:';
+          td4.status = tempData.status;
+          td4.labelInput = tempData.chol;
+          td4.unit = 'mmol/L';
+          td4.content = '血脂' + that.defaultContent(tempData.status, tempData.chol);
+          Object.assign(tempArr[indexa], tempArr[indexa][112][0], td4);
+          break;
+        case '102':
+          let td5 = {name: '血氧', pic: '5', status: '', pageUrl: '105', label: '', labelInput: '', content: '', dataShow: '', unit: ''};
+          td5.dataShow = tempData.yearMonth;
+          td5.label = '血氧饱和度:';
+          td5.labelInput = tempData.xy;
+          td5.status = tempData.status;
+          td5.unit = '%';
+          td5.content = '血氧' + that.defaultContent(tempData.status, tempData.xy);
+          Object.assign(tempArr[indexa], td5);
+          break;
+        case '105':
+          let td6 = {name: '体温', pic: '6', status: '', pageUrl: '106', label: '', labelInput: '', content: '', dataShow: '', unit: ''};
+          td6.dataShow = tempData.yearMonth;
+          td6.label = '摄氏度:';
+          td6.labelInput = tempData.tw;
+          td6.status = tempData.status;
+          td6.unit = '°C';
+          td6.content = '体温' + that.defaultContent(tempData.status, tempData.tw);
+          Object.assign(tempArr[indexa], td6);
+          break;
+        case '113':
+          let td7 = {name: '睡眠', pic: '7', status: '', pageUrl: '107', label: '', labelInput: '', content: '', dataShow: '', unit: ''};
+          td7.dataShow = tempData.yearMonth;
+          td7.label = '呼吸障碍指数:';
+          td7.labelInput = tempData.ahi;
+          td7.status = tempData.status;
+          td7.unit = '';
+          td7.content = '睡眠' + that.defaultContent(tempData.status, tempData.ahi);
+          Object.assign(tempArr[indexa], td7);
+          break;
+        case '111':
+          let td8 = {name: 'BMI', pic: '13', status: '', pageUrl: '108', label: '', labelInput: '', content: '', dataShow: '', unit: ''};
+          td8.dataShow = tempData.yearMonth;
+          td8.label = '';
+          td8.labelInput = tempData.bmi;
+          td8.status = tempData.status;
+          td8.unit = '';
+          td8.content = 'BMI' + that.defaultContent(tempData.status, tempData.bmi);
+          Object.assign(tempArr[indexa], td8);
+          break;
+        case '107':
+          let td9 = {name: '总胆固醇', pic: '11', status: '', pageUrl: '109', label: '', labelInput: '', content: '', dataShow: '', unit: ''};
+          td9.dataShow = tempData.yearMonth;
+          td9.label = '胆固醇';
+          td9.labelInput = tempData.dgc;
+          td9.status = tempData.status;
+          td9.unit = '';
+          td9.content = '总胆固醇' + that.defaultContent(tempData.status, tempData.dgc);
+          Object.assign(tempArr[indexa], td9);
+          break;
+        case '106':
+          let td10 = {name: '糖化血红蛋白', pic: '12', status: '', pageUrl: '110', label: '', labelInput: '', content: '', dataShow: '', unit: ''};
+          td10.dataShow = tempData.yearMonth;
+          td10.label = '血红蛋白:';
+          td10.labelInput = tempData.ifcc;
+          td10.status = tempData.status;
+          td10.unit = '';
+          td10.content = '血红蛋白' + that.defaultContent(tempData.status, tempData.ifcc);
+          Object.assign(tempArr[indexa], td10);
+          break;
+        case '110':
+          let td11 = {name: '尿酸', pic: '10', status: '', pageUrl: '111', label: '', labelInput: '', content: '', dataShow: '', unit: ''};
+          td11.dataShow = tempData.yearMonth;
+          td11.label = '尿酸值:';
+          td11.labelInput = tempData.ns;
+          td11.status = tempData.status;
+          td11.unit = '';
+          td11.content = '尿酸' + that.defaultContent(tempData.status, tempData.ns);
+          Object.assign(tempArr[indexa], td11);
+          break;
+      }
+    },
+    defaultContent (arg, value) {
+      let defaultContentHight = '偏高，请注意身体';
+      let defaultContentLow = '偏低，请注意身体';
+      let defaultContentNormal = '正常，请注意保持';
+      let defaultContentUnknown = '未知，请注意检查';
+      let defaultContent = '暂无测量数据';
+      if (value == null) {
+        return defaultContent;
+      } else {
+        switch (arg) {
+          case '-2':
+            return defaultContentUnknown;
+          case '-1':
+            return defaultContentLow;
+          case '0':
+            return defaultContentNormal;
+          case '1':
+            return defaultContentHight;
+        }
+      }
+    }
+  }
+};
+</script>
+<style lang="less" scoped>
+  .app{
+    .myHeadthBod{
+      margin-bottom: 20px;
+    }
+    .border_box{
+      border-top: 1px solid rgba(170, 170, 170, 0.445);
+    }
+    .yellowCladd{
+      background: #FFB628;
+    }
+    .showmore{
+      font-size: 22px;
+      text-align: right;
+      margin-top: 20px;
+      display: block;
+      button{
+        background: #fff;
+        border: 0;
+        color: #1BD0A1;
+        user-select: none;
+      }
+      button:hover{
+        border: 0;
+      }
+    }
+    #bannerFix{
+      position: fixed;
+      width: 100%;
+      top: 0;
+      margin-top: 0;
+      background: #fff;
+      z-index: 9999;
+      box-shadow: 1px 1px 1px rgba(99, 97, 97, 0.418);
+    }
+    background: #eeeeee;
+    color: #333333;
+    ._black_height{
+        height: 176px;
+      }
+    .me{
+      background: #fff;
+      margin-top: 20px;
+      padding: 20px;
+      h3{
+        font-size: 32px;
+        text-align: center;
+      }
+      .my-item{
+        margin-top: 50px;
+        margin-bottom: 70px;
+        .my-img{
+          width: 116px;
+          height: 116px;
+          overflow: hidden;
+          border-radius: 50%;
+          border: 1px solid rgb(196, 193, 193);
+          padding: 22px;
+          .bgUrl{
+            width: 100%;
+            height: 100%;
+          }
+        }
+        .my-center{
+          flex: 2;
+          margin-left: 30px;
+          font-size: 34px;
+          .my-title{
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            span{
+              background: #FF3355;
+              color: #fff;
+              padding:4px 10px;
+              margin-left: 10px;
+              font-size: 22px;
+              border-radius: 20px;
+              margin-left: 40px;
+            }
+            .is_black{
+              flex: 2;
+            }
+          }
+          .process{
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 50px 0 30px 0;
+            position: relative;
+            .opictitya{
+              opacity: 0.1;
+            }
+            li{
+              height: 10px;
+              width: 30%;
+              .fontSize20{
+                font-size: 12px;
+              }
+              div{
+                .colorB9B9B9{
+                  color: #B9B9B9 !important;
+                }
+                position: absolute;
+                bottom: 20px;
+                transform: translateX(-50%);
+                text-align: right;
+                white-space: nowrap;
+                font-size: 32px;
+                font-weight: bold;
+              }
+            }
+            li:nth-child(1){
+              width: 32%;
+            }
+            li:nth-child(2){
+              width: 34%;
+              background: #1BD0A1;
+              span{
+                color: #1BD0A1;
+              }
+              border-radius: 10px 0 0 10px;
+            }
+            li:nth-child(3){
+              width: 34%;
+              background: #FF3355;
+              span{
+                color: #FF3355;
+              }
+              border-radius: 0 10px 10px 0;
+            }
+          }
+          .my-last{
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: #666666;
+            font-size: 24px;
+          }
+        }
+      }
+      .m-item{
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        flex-grow: 1;
+        .m-img{
+          width: 128px;
+          height: 128px;
+          border-radius: 50%;
+          overflow: hidden;
+          img{
+            width: 100%;
+            height: 100%;
+          }
+        }
+        .cneter_{
+          flex: 2;
+          margin-left: 50px;
+          font-size: 35px;
+        }
+        .switchUser{
+          color: #3D99FD;
+        }
+      }
+    }
+    .end{
+      padding: 40px 0 30px 0;
+      div{
+        font-size: 24px;
+        color: #AAAAAA;
+        text-align: center;
+        span{
+          position: relative;
+          &::after,&::before{
+            position: absolute;
+            content: "";
+            display: block;
+            width: 70px;
+            height: 2px;
+            background: #C7C7C7;
+          }
+          &::after{
+            right: 175px;
+            bottom: 50%;
+          }
+          &::before{
+            left: 175px;
+            bottom: 50%;
+          }
+        }
+      }
+    }
+  }
+  .banner{
+    width: 100vw;
+  }
+  .threeCircle_1{
+    width: 100%;
+  }
+  .threeCircle{
+    width: 80%;
+    float: right;
+    display: flex;
+    justify-content: space-between;
+    &>div{
+      font-size: 22px;
+      text-align: center;
+      padding-top: 40px;
+      width: 28%;
+      .borderLow{
+        border: 6px solid #FFB628;
+      }
+      .borderUpper{
+        border: 6px solid #FF3355;
+      }
+      .normals{
+        border: 6px solid #1BD0A1;
+      }
+      .circle_{
+        margin: auto;
+        border-radius: 50%;
+        width: 120px;
+        height: 120px;
+        color: #FF3355;
+        line-height: 30px;
+        padding-top: 24px;
+        margin-bottom: 20px;
+        p:first-child{
+          font-size: 30px;
+        }
+      }
+    }
+  }
+  .content_orderList{
+    display: flex;
+    flex-direction: column;
+  }
+</style>
